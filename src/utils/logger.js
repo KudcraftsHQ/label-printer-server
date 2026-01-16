@@ -1,33 +1,6 @@
 const winston = require('winston');
-const path = require('path');
-const fs = require('fs');
 
-// Create logs directory in user data folder (works in packaged app)
-// In production: %APPDATA%/label-printer-server/logs
-// In development: ./logs
-const getLogsDir = () => {
-  // Check if running inside asar (packaged app)
-  const isPackaged = __dirname.includes('app.asar');
-
-  if (isPackaged) {
-    // Use electron's app module for user data path
-    try {
-      const { app } = require('electron');
-      return path.join(app.getPath('userData'), 'logs');
-    } catch {
-      // Fallback: use standard AppData location on Windows
-      const appData = process.env.APPDATA || process.env.HOME;
-      return path.join(appData, 'label-printer-server', 'logs');
-    }
-  }
-  return path.join(__dirname, '../../logs');
-};
-
-const logsDir = getLogsDir();
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
+// Console-only logging (no file writes to avoid asar issues in packaged app)
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -40,7 +13,6 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'label-printer-server' },
   transports: [
-    // Write all logs to console
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
@@ -57,14 +29,6 @@ const logger = winston.createLogger({
           }
         )
       )
-    }),
-    // Write all logs to file
-    new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error'
-    }),
-    new winston.transports.File({
-      filename: path.join(logsDir, 'combined.log')
     })
   ]
 });
