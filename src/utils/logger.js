@@ -2,8 +2,28 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, '../../logs');
+// Create logs directory in user data folder (works in packaged app)
+// In production: %APPDATA%/label-printer-server/logs
+// In development: ./logs
+const getLogsDir = () => {
+  // Check if running inside asar (packaged app)
+  const isPackaged = __dirname.includes('app.asar');
+
+  if (isPackaged) {
+    // Use electron's app module for user data path
+    try {
+      const { app } = require('electron');
+      return path.join(app.getPath('userData'), 'logs');
+    } catch {
+      // Fallback: use standard AppData location on Windows
+      const appData = process.env.APPDATA || process.env.HOME;
+      return path.join(appData, 'label-printer-server', 'logs');
+    }
+  }
+  return path.join(__dirname, '../../logs');
+};
+
+const logsDir = getLogsDir();
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
