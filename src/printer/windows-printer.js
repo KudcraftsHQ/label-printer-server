@@ -10,10 +10,10 @@ let printer = null;
 function getPrinterModule() {
   if (!printer) {
     try {
-      printer = require('printer');
+      printer = require('@thiagoelg/node-printer');
     } catch (error) {
       logger.error('Failed to load printer module', { error: error.message });
-      throw new Error('Windows printing module not available. Please install: npm install printer');
+      throw new Error('Windows printing module not available. Please install: npm install @thiagoelg/node-printer');
     }
   }
   return printer;
