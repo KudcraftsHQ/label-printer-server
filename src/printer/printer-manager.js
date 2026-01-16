@@ -1,8 +1,29 @@
-const usb = require('usb');
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const { logger } = require('../utils/logger');
+
+// Platform detection
+const isWindows = process.platform === 'win32';
+
+// Lazy load USB module - only on non-Windows platforms
+let usb = null;
+function getUsbModule() {
+  if (!usb) {
+    usb = require('usb');
+  }
+  return usb;
+}
+
+// Import Windows printer manager
+let WindowsPrinterManager = null;
+if (isWindows) {
+  try {
+    WindowsPrinterManager = require('./windows-printer').WindowsPrinterManager;
+  } catch (error) {
+    logger.warn('Windows printer module not available', { error: error.message });
+  }
+}
 
 // Config file path for persistent storage
 function getConfigPath() {
@@ -200,7 +221,8 @@ class PrinterManager {
    */
   listPrinters() {
     try {
-      const devices = usb.getDeviceList();
+      const usbModule = getUsbModule();
+      const devices = usbModule.getDeviceList();
       const printers = devices.map(device => {
         const vendorId = device.deviceDescriptor.idVendor;
         const productId = device.deviceDescriptor.idProduct;
@@ -258,7 +280,8 @@ class PrinterManager {
       }
 
       // Find device
-      this.device = usb.findByIds(vendorId, productId);
+      const usbModule = getUsbModule();
+      this.device = usbModule.findByIds(vendorId, productId);
       if (!this.device) {
         throw new Error(`Printer not found: ${vendorId}:${productId}`);
       }
@@ -468,13 +491,20 @@ let printerManagerInstance = null;
 
 /**
  * Get printer manager instance
- * @returns {PrinterManager} Printer manager singleton
+ * Returns WindowsPrinterManager on Windows, PrinterManager (USB) on other platforms
+ * @returns {PrinterManager|WindowsPrinterManager} Printer manager singleton
  */
 function getPrinterManager() {
   if (!printerManagerInstance) {
-    printerManagerInstance = new PrinterManager();
+    if (isWindows && WindowsPrinterManager) {
+      logger.info('Using Windows native printer manager');
+      printerManagerInstance = new WindowsPrinterManager();
+    } else {
+      logger.info('Using USB printer manager');
+      printerManagerInstance = new PrinterManager();
+    }
   }
   return printerManagerInstance;
 }
 
-module.exports = { PrinterManager, getPrinterManager };
+module.exports = { PrinterManager, getPrinterManager, isWindows };

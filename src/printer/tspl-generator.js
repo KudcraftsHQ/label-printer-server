@@ -833,6 +833,65 @@ class TSPLGenerator {
   }
 
   /**
+   * Generate labels from array of unique label data, filling rows left-to-right
+   * @param {object} data
+   * @param {Array} data.labels - Array of {title, subtitle, qrData} objects
+   * @returns {string} TSPL commands
+   */
+  generateBatchLabels(data) {
+    const { labels } = data;
+
+    if (!labels || !Array.isArray(labels) || labels.length === 0) {
+      throw new Error('labels array is required');
+    }
+
+    const { layout: pageLayout } = this.pageConfig;
+    const columns = pageLayout.columns || 1;
+
+    const fullRows = Math.floor(labels.length / columns);
+    const remainder = labels.length % columns;
+
+    // Process full rows (unique labels per column)
+    for (let row = 0; row < fullRows; row++) {
+      this.initLabel(true); // Full row mode
+
+      for (let col = 0; col < columns; col++) {
+        const labelIndex = row * columns + col;
+        const label = labels[labelIndex];
+
+        this._addStickerContent({
+          title: label.title,
+          subtitle: label.subtitle,
+          codeData: label.qrData,
+          layoutType: 'qr'
+        }, col);
+      }
+
+      this.print(1);
+    }
+
+    // Process partial row (remaining labels on one row)
+    if (remainder > 0) {
+      this.initLabel(true); // Full row mode
+      const startIndex = fullRows * columns;
+
+      for (let i = 0; i < remainder; i++) {
+        const label = labels[startIndex + i];
+        this._addStickerContent({
+          title: label.title,
+          subtitle: label.subtitle,
+          codeData: label.qrData,
+          layoutType: 'qr'
+        }, i); // Place at column i (0, 1, ...)
+      }
+
+      this.print(1);
+    }
+
+    return this.getTSPL();
+  }
+
+  /**
    * Get the complete TSPL command string
    * @returns {string} TSPL commands joined with \r\n
    */

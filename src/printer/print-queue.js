@@ -86,6 +86,36 @@ class PrintQueue {
   }
 
   /**
+   * Add a batch print job to the queue (multiple unique labels)
+   * @param {object} jobData - Job data
+   * @param {string} jobData.pageConfig - Page configuration ID
+   * @param {Array} jobData.labels - Array of label objects {title, subtitle, qrData}
+   * @returns {object} Created job
+   */
+  addBatchJob(jobData) {
+    const job = {
+      id: uuidv4(),
+      status: JobStatus.PENDING,
+      pageConfig: jobData.pageConfig || 'default',
+      labels: jobData.labels,  // Array of label objects
+      isBatch: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      error: null,
+      tspl: null
+    };
+
+    this.jobs.set(job.id, job);
+    logger.info(`Batch job ${job.id} added with ${job.labels.length} labels`);
+
+    if (!this.processing) {
+      this.processQueue();
+    }
+
+    return job;
+  }
+
+  /**
    * Get a job by ID
    * @param {string} jobId - Job ID
    * @returns {object|null} Job or null if not found
@@ -211,15 +241,22 @@ class PrintQueue {
       // Generate TSPL if not already provided
       if (!job.tspl) {
         const generator = new TSPLGenerator(job.pageConfig);
-        job.tspl = generator.generateProductLabel({
-          qrData: job.label.qrData,
-          barcodeData: job.label.barcodeData,
-          title: job.label.title,
-          subtitle: job.label.subtitle,
-          itemQuantity: job.label.itemQuantity,
-          layout: job.label.layout || 'barcode',
-          quantity: job.quantity
-        });
+
+        if (job.isBatch) {
+          // Batch job: generate labels for multiple unique items
+          job.tspl = generator.generateBatchLabels({ labels: job.labels });
+        } else {
+          // Single job: generate label with quantity
+          job.tspl = generator.generateProductLabel({
+            qrData: job.label.qrData,
+            barcodeData: job.label.barcodeData,
+            title: job.label.title,
+            subtitle: job.label.subtitle,
+            itemQuantity: job.label.itemQuantity,
+            layout: job.label.layout || 'barcode',
+            quantity: job.quantity
+          });
+        }
       }
 
       // Get printer manager

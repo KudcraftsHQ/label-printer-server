@@ -772,6 +772,7 @@
     let apiPort = 9632;
     let connectedPrinter = null;
     let availablePrinters = [];
+    let isWindowsServer = false;
 
     function toHex(num) {
       return '0x' + num.toString(16).toUpperCase().padStart(4, '0');
@@ -810,16 +811,28 @@
             const device = statusData.status.device;
             connectedPrinter = device;
 
-            const printerInfo = availablePrinters.find(
-              p => p.vendorId === device.vendorId && p.productId === device.productId
-            );
-
-            document.getElementById('printer-manufacturer').textContent =
-              printerInfo?.manufacturer || 'Unknown';
-            document.getElementById('printer-product').textContent =
-              printerInfo?.product || 'Unknown';
-            document.getElementById('printer-vid').textContent = toHex(device.vendorId);
-            document.getElementById('printer-pid').textContent = toHex(device.productId);
+            // Handle both Windows (name) and USB (vendorId/productId) printers
+            if (device.name) {
+              // Windows printer
+              const printerInfo = availablePrinters.find(p => p.name === device.name);
+              document.getElementById('printer-manufacturer').textContent =
+                printerInfo?.manufacturer || device.driver || 'Windows Printer';
+              document.getElementById('printer-product').textContent =
+                device.name || 'Unknown';
+              document.getElementById('printer-vid').textContent = 'N/A';
+              document.getElementById('printer-pid').textContent = 'N/A';
+            } else {
+              // USB printer
+              const printerInfo = availablePrinters.find(
+                p => p.vendorId === device.vendorId && p.productId === device.productId
+              );
+              document.getElementById('printer-manufacturer').textContent =
+                printerInfo?.manufacturer || 'Unknown';
+              document.getElementById('printer-product').textContent =
+                printerInfo?.product || 'Unknown';
+              document.getElementById('printer-vid').textContent = toHex(device.vendorId);
+              document.getElementById('printer-pid').textContent = toHex(device.productId);
+            }
 
             detailsDiv.style.display = 'block';
           }
@@ -856,6 +869,7 @@
 
         if (data.success) {
           availablePrinters = data.printers;
+          isWindowsServer = data.isWindows || false;
           renderPrinterList();
         } else {
           listDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Error loading devices</div></div>';
@@ -870,46 +884,72 @@
       const listDiv = document.getElementById('printer-list');
 
       if (availablePrinters.length === 0) {
-        listDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔌</div><div class="empty-state-text">No USB printers detected</div></div>';
+        const emptyMsg = isWindowsServer ? 'No printers detected' : 'No USB printers detected';
+        listDiv.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔌</div><div class="empty-state-text">${emptyMsg}</div></div>`;
         return;
       }
 
       listDiv.innerHTML = availablePrinters.map(printer => {
-        const isConnected = connectedPrinter &&
-          connectedPrinter.vendorId === printer.vendorId &&
-          connectedPrinter.productId === printer.productId;
+        // Windows uses printer name, other platforms use USB IDs
+        const isConnected = isWindowsServer
+          ? (connectedPrinter && connectedPrinter.name === printer.name)
+          : (connectedPrinter && connectedPrinter.vendorId === printer.vendorId && connectedPrinter.productId === printer.productId);
+
+        // Different display for Windows vs USB printers
+        const specsHtml = isWindowsServer ? `
+          <div class="spec-item">
+            <div class="spec-label">Driver</div>
+            <div class="spec-value">${printer.manufacturer || 'Unknown'}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Port</div>
+            <div class="spec-value">${printer.portName || 'N/A'}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Status</div>
+            <div class="spec-value">${printer.status === 0 ? 'Ready' : 'Busy'}</div>
+          </div>
+          ${printer.isDefault ? '<div class="spec-item"><div class="spec-label">Default</div><div class="spec-value">Yes</div></div>' : ''}
+        ` : `
+          <div class="spec-item">
+            <div class="spec-label">Vendor ID</div>
+            <div class="spec-value">${toHex(printer.vendorId)}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Product ID</div>
+            <div class="spec-value">${toHex(printer.productId)}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Bus</div>
+            <div class="spec-value">${printer.busNumber}</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Address</div>
+            <div class="spec-value">${printer.deviceAddress}</div>
+          </div>
+        `;
+
+        // Connect button - pass name for Windows, IDs for USB
+        const connectBtn = isWindowsServer
+          ? `<button class="btn btn-primary" onclick="connectPrinter(null, null, '${printer.name.replace(/'/g, "\\'")}')">Connect</button>`
+          : `<button class="btn btn-primary" onclick="connectPrinter(${printer.vendorId}, ${printer.productId})">Connect</button>`;
 
         return `
           <div class="printer-card ${isConnected ? 'connected' : ''}">
             <div class="printer-card-header">
               <div>
-                <div class="printer-name">${printer.product || 'Unknown Device'}</div>
-                <div class="printer-manufacturer">${printer.manufacturer || 'Unknown Manufacturer'}</div>
+                <div class="printer-name">${printer.name || printer.product || 'Unknown Device'}</div>
+                <div class="printer-manufacturer">${isWindowsServer ? 'Windows Printer' : (printer.manufacturer || 'Unknown Manufacturer')}</div>
               </div>
               ${isConnected ? '<span class="printer-badge">Active</span>' : ''}
             </div>
             <div class="printer-specs">
-              <div class="spec-item">
-                <div class="spec-label">Vendor ID</div>
-                <div class="spec-value">${toHex(printer.vendorId)}</div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-label">Product ID</div>
-                <div class="spec-value">${toHex(printer.productId)}</div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-label">Bus</div>
-                <div class="spec-value">${printer.busNumber}</div>
-              </div>
-              <div class="spec-item">
-                <div class="spec-label">Address</div>
-                <div class="spec-value">${printer.deviceAddress}</div>
-              </div>
+              ${specsHtml}
             </div>
             <div>
               ${isConnected
                 ? '<button class="btn btn-success" disabled>Connected</button>'
-                : `<button class="btn btn-primary" onclick="connectPrinter(${printer.vendorId}, ${printer.productId})">Connect</button>`
+                : connectBtn
               }
             </div>
           </div>
@@ -917,12 +957,17 @@
       }).join('');
     }
 
-    async function connectPrinter(vendorId, productId) {
+    async function connectPrinter(vendorId, productId, name) {
       try {
+        // Windows uses printer name, other platforms use USB IDs
+        const payload = isWindowsServer
+          ? { name }
+          : { vendorId, productId };
+
         const response = await fetch(`http://localhost:${apiPort}/printers/connect`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vendorId, productId })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();

@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { logger } = require('../utils/logger');
-const { getPrinterManager } = require('../printer/printer-manager');
+const { getPrinterManager, isWindows } = require('../printer/printer-manager');
 const { getPrintQueue } = require('../printer/print-queue');
 const { getAllPageConfigs } = require('../config/page-configs');
 
@@ -45,6 +45,7 @@ app.get('/', (req, res) => {
       'GET /configs': 'Get available page configurations',
       'POST /print': 'Add a print job to the queue',
       'POST /print/custom': 'Add a custom TSPL print job',
+      'POST /print/batch': 'Add batch print job (multiple unique labels)',
       'GET /jobs': 'List all print jobs',
       'GET /jobs/:id': 'Get a specific job',
       'DELETE /jobs/:id': 'Cancel/delete a job',
@@ -81,7 +82,9 @@ app.get('/printers', (req, res) => {
 
     res.json({
       success: true,
-      printers
+      printers,
+      platform: process.platform,
+      isWindows
     });
   } catch (error) {
     logger.error('Error listing printers', { error: error.message });
@@ -94,30 +97,42 @@ app.get('/printers', (req, res) => {
 
 /**
  * POST /printers/connect - Connect to Printer
- * Body: { vendorId: number, productId: number }
+ * Body (USB/macOS/Linux): { vendorId: number, productId: number }
+ * Body (Windows): { name: string }
  */
 app.post('/printers/connect', (req, res) => {
   try {
-    const { vendorId, productId } = req.body;
+    const { vendorId, productId, name } = req.body;
+    const printerManager = getPrinterManager();
 
-    if (!vendorId || !productId) {
-      return res.status(400).json({
-        success: false,
-        error: 'vendorId and productId are required'
+    // Windows uses printer name, other platforms use USB IDs
+    if (isWindows) {
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          error: 'Printer name is required on Windows'
+        });
+      }
+      printerManager.connect({ name });
+      res.json({
+        success: true,
+        message: 'Connected to printer',
+        printer: { name }
+      });
+    } else {
+      if (!vendorId || !productId) {
+        return res.status(400).json({
+          success: false,
+          error: 'vendorId and productId are required'
+        });
+      }
+      printerManager.connect({ vendorId, productId });
+      res.json({
+        success: true,
+        message: 'Connected to printer',
+        printer: { vendorId, productId }
       });
     }
-
-    const printerManager = getPrinterManager();
-    printerManager.connect({ vendorId, productId });
-
-    res.json({
-      success: true,
-      message: 'Connected to printer',
-      printer: {
-        vendorId,
-        productId
-      }
-    });
   } catch (error) {
     logger.error('Error connecting to printer', { error: error.message });
     res.status(500).json({
@@ -283,6 +298,57 @@ app.post('/print/custom', (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+/**
+ * POST /print/batch - Add Batch Print Job (multiple unique labels)
+ * Body: {
+ *   labels: Array<{title: string, subtitle?: string, qrData?: string}> (required)
+ *   pageConfig: string (optional, defaults to 'default')
+ * }
+ *
+ * This endpoint fills rows left-to-right with unique labels:
+ * - 3 labels → 1 row: [Label1] [Label2] [Label3]
+ * - 5 labels → 2 rows: [Label1] [Label2] [Label3] + [Label4] [Label5] [empty]
+ */
+app.post('/print/batch', (req, res) => {
+  try {
+    const { labels, pageConfig = 'default' } = req.body;
+
+    // Validation
+    if (!labels || !Array.isArray(labels) || labels.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'labels array is required and must not be empty'
+      });
+    }
+
+    // Validate each label has title
+    for (let i = 0; i < labels.length; i++) {
+      if (!labels[i].title) {
+        return res.status(400).json({
+          success: false,
+          error: `Label at index ${i} is missing required 'title' field`
+        });
+      }
+    }
+
+    const printQueue = getPrintQueue();
+    const job = printQueue.addBatchJob({ labels, pageConfig });
+
+    res.json({
+      success: true,
+      job: {
+        id: job.id,
+        status: job.status,
+        labelCount: labels.length,
+        createdAt: job.createdAt
+      }
+    });
+  } catch (error) {
+    logger.error('Batch print error:', { error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
