@@ -33,8 +33,6 @@ jobs:
 
       - name: Build Windows installer
         run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -42,12 +40,22 @@ jobs:
           name: windows-installer
           path: dist/*.exe
 
-      - name: Create Release
+      - name: Upload to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp dist/ s3://${{ secrets.R2_BUCKET }}/ --recursive --exclude "*" --include "*.exe" --include "latest.yml" --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
+      - name: Create GitHub Release (changelog only)
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            dist/*.exe
-            dist/latest.yml
+          body: |
+            ## Download
+
+            Download the installer from: https://releases.kudcrafts.com/Label-Printer-Server-Setup-${{ github.ref_name }}.exe
+
+            Auto-update will deliver this version to existing installations.
           draft: false
           prerelease: false
         env:

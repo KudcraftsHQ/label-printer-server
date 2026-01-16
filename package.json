@@ -46,9 +46,8 @@
       "package.json"
     ],
     "publish": {
-      "provider": "github",
-      "owner": "KudcraftsHQ",
-      "repo": "label-printer-server"
+      "provider": "generic",
+      "url": "https://releases.kudcrafts.com"
     },
     "win": {
       "target": [
