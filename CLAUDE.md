@@ -28,23 +28,29 @@ Version is stored in `package.json` only (single source of truth).
 
 ### Release Workflow
 
-1. Update version in `package.json`
-2. Commit: `git commit -m "Release vX.Y.Z"`
-3. Tag: `git tag vX.Y.Z`
-4. Push: `git push && git push --tags`
-5. GitHub Actions builds and publishes Windows installer
-
-### Version Bump Commands
+**Every push to main must include a version tag to trigger a release.**
 
 ```bash
-# Patch (bug fix)
-npm version patch
+# 1. Bump version (creates commit + tag automatically)
+npm version patch   # Bug fix: 1.0.0 → 1.0.1
+npm version minor   # New feature: 1.0.1 → 1.1.0
+npm version major   # Breaking change: 1.1.0 → 2.0.0
 
-# Minor (new feature)
-npm version minor
+# 2. Push commit and tag together
+git push && git push --tags
+```
 
-# Major (breaking change)
-npm version major
+This triggers GitHub Actions which:
+1. Builds Windows installer (`Label-Printer-Server-Setup-{version}.exe`)
+2. Creates GitHub Release with the installer
+3. Enables auto-update for existing installations
+
+### Manual Version Tag (if needed)
+
+```bash
+# If you already committed without tagging:
+git tag v1.0.1
+git push --tags
 ```
 
 ## Build
