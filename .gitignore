@@ -31,3 +31,4 @@ Thumbs.db
 
 # Electron
 out/
+.tldr/daemon.pid
