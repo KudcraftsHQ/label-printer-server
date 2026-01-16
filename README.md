@@ -21,10 +21,21 @@ An Electron-based desktop application that provides a local API server for print
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API Documentation](#api-documentation)
+  - [General Endpoints](#general-endpoints)
+  - [Printer Management](#printer-management)
+  - [Configuration](#configuration)
+  - [Print Jobs](#print-jobs)
+  - [Queue Management](#queue-management)
 - [Page Configurations](#page-configurations)
 - [TSPL Reference](#tspl-reference)
 - [Development](#development)
 - [Building](#building)
+- [Configuration](#configuration-1)
+- [Auto-Updates](#auto-updates)
+- [Versioning & Releases](#versioning--releases)
+- [API Integration Examples](#api-integration-examples)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
 
 ## Installation
 
@@ -49,7 +60,7 @@ npm start
 ```
 
 The application will:
-1. Start the API server on port 3000 (or next available port)
+1. Start the API server on port 9632 (default)
 2. Open the dashboard in an Electron window
 3. Begin listening for USB printers
 
@@ -57,12 +68,12 @@ The application will:
 
 1. List available printers:
 ```bash
-curl http://localhost:3000/printers
+curl http://localhost:9632/printers
 ```
 
 2. Connect to a printer:
 ```bash
-curl -X POST http://localhost:3000/printers/connect \
+curl -X POST http://localhost:9632/printers/connect \
   -H "Content-Type: application/json" \
   -d '{
     "vendorId": 4611,
@@ -73,7 +84,7 @@ curl -X POST http://localhost:3000/printers/connect \
 ### Print a Label
 
 ```bash
-curl -X POST http://localhost:3000/print \
+curl -X POST http://localhost:9632/print \
   -H "Content-Type: application/json" \
   -d '{
     "label": {
@@ -87,7 +98,28 @@ curl -X POST http://localhost:3000/print \
 
 ## API Documentation
 
-Base URL: `http://localhost:3000`
+**Base URL:** `http://localhost:9632`
+
+**Default Port:** 9632
+
+### API Endpoints Quick Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | API information and available endpoints |
+| GET | `/health` | Health check + printer/queue status |
+| GET | `/printers` | List available USB printers |
+| POST | `/printers/connect` | Connect to a specific printer |
+| POST | `/printers/disconnect` | Disconnect from current printer |
+| GET | `/printers/status` | Get current printer status |
+| GET | `/configs` | Get all available label configurations |
+| POST | `/print` | Queue a new print job |
+| POST | `/print/custom` | Queue a custom TSPL print job |
+| GET | `/jobs` | List all print jobs (with optional filters) |
+| GET | `/jobs/:id` | Get details of a specific job |
+| DELETE | `/jobs/:id` | Cancel or delete a print job |
+| GET | `/queue/stats` | Get print queue statistics |
+| POST | `/queue/clear` | Clear completed and cancelled jobs |
 
 ### General Endpoints
 
@@ -545,6 +577,187 @@ npm run build:all
 
 Built applications will be in the `dist/` directory.
 
+## Configuration
+
+User settings are automatically saved and stored at:
+- **Windows:** `%APPDATA%/label-printer-server/config.json`
+- **macOS:** `~/Library/Application Support/label-printer-server/config.json`
+
+### Configuration Schema
+
+```json
+{
+  "version": "1.0.0",
+  "printer": {
+    "vendorId": 1234,
+    "productId": 5678,
+    "name": "Printer Name"
+  },
+  "network": {
+    "port": 9632
+  },
+  "defaults": {
+    "pageConfig": "default"
+  },
+  "startup": {
+    "launchOnBoot": true,
+    "startMinimized": false
+  },
+  "setupCompleted": true
+}
+```
+
+### First-Time Setup
+
+On first launch, the application will show a setup wizard to:
+1. Detect and select your USB thermal printer
+2. Choose your default label configuration
+3. Configure startup options
+
+Once setup is complete, the application will remember your preferences.
+
+## Auto-Updates
+
+The application includes automatic update functionality:
+- Checks for new releases from GitHub on startup
+- Downloads updates silently in the background
+- Installs updates automatically when you quit the app
+- No manual update process required
+
+Updates are delivered through GitHub Releases and use the `electron-updater` framework.
+
+## Versioning & Releases
+
+This project follows [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+
+| Change Type | Version Bump | Example |
+|-------------|--------------|---------|
+| Bug fix, printer compatibility | PATCH | 1.0.0 → 1.0.1 |
+| New feature, new API endpoint | MINOR | 1.0.1 → 1.1.0 |
+| Breaking API change, major rewrite | MAJOR | 1.1.0 → 2.0.0 |
+
+### Release Process
+
+Every push to `main` with a version tag triggers an automated release:
+
+```bash
+# Bump version (creates commit + tag automatically)
+npm version patch   # Bug fix: 1.0.0 → 1.0.1
+npm version minor   # New feature: 1.0.1 → 1.1.0
+npm version major   # Breaking change: 1.1.0 → 2.0.0
+
+# Push commit and tags
+git push && git push --tags
+```
+
+GitHub Actions will:
+1. Build Windows installer: `Label-Printer-Server-Setup-{version}.exe`
+2. Create GitHub Release with changelog
+3. Enable auto-update for existing installations
+
+## API Integration Examples
+
+### Python Example
+
+```python
+import requests
+
+API_BASE = "http://localhost:9632"
+
+# Check server health
+response = requests.get(f"{API_BASE}/health")
+print(response.json())
+
+# Print a label
+label_data = {
+    "pageConfig": "default",
+    "label": {
+        "qrData": "PRODUCT-12345",
+        "title": "My Product",
+        "subtitle": "SKU-12345"
+    },
+    "quantity": 5
+}
+
+response = requests.post(f"{API_BASE}/print", json=label_data)
+print(response.json())
+```
+
+### JavaScript/Node.js Example
+
+```javascript
+const axios = require('axios');
+
+const API_BASE = 'http://localhost:9632';
+
+// Check server health
+async function checkHealth() {
+  const response = await axios.get(`${API_BASE}/health`);
+  console.log(response.data);
+}
+
+// Print a label
+async function printLabel() {
+  const labelData = {
+    pageConfig: 'default',
+    label: {
+      qrData: 'PRODUCT-12345',
+      title: 'My Product',
+      subtitle: 'SKU-12345'
+    },
+    quantity: 5
+  };
+
+  const response = await axios.post(`${API_BASE}/print`, labelData);
+  console.log(response.data);
+}
+
+checkHealth();
+printLabel();
+```
+
+### cURL Examples
+
+```bash
+# Check health
+curl http://localhost:9632/health
+
+# List available printers
+curl http://localhost:9632/printers
+
+# Connect to a printer
+curl -X POST http://localhost:9632/printers/connect \
+  -H "Content-Type: application/json" \
+  -d '{"vendorId": 4611, "productId": 2}'
+
+# Print a label
+curl -X POST http://localhost:9632/print \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": {
+      "qrData": "TEST-001",
+      "title": "Test Label",
+      "subtitle": "Sample"
+    },
+    "quantity": 1
+  }'
+
+# Get queue statistics
+curl http://localhost:9632/queue/stats
+
+# List all jobs
+curl http://localhost:9632/jobs
+
+# Get specific job
+curl http://localhost:9632/jobs/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+# Cancel a job
+curl -X DELETE http://localhost:9632/jobs/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+# Clear completed jobs
+curl -X POST http://localhost:9632/queue/clear
+```
+
 ## Troubleshooting
 
 ### Printer Not Detected
@@ -564,7 +777,10 @@ Built applications will be in the `dist/` directory.
 
 ### Port Already in Use
 
-If port 3000 is in use, the server will automatically try the next available port (3001, 3002, etc.). Check the dashboard or logs for the actual port.
+The default port is 9632. If this port is already in use, the server will fail to start. You can:
+1. Stop the application using port 9632
+2. Manually configure a different port in `config.json`
+3. Check the dashboard or logs to confirm the active port
 
 ## References
 
