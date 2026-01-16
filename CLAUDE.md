@@ -1,0 +1,134 @@
+# Label Printer Server
+
+Electron-based label printer server with TSPL support for thermal printers.
+
+## Quick Start
+
+```bash
+bun install
+bun run start
+```
+
+## API Server
+
+- **Default Port**: 9632
+- **Health Check**: `GET http://localhost:9632/health`
+
+## Versioning
+
+### Semantic Versioning (MAJOR.MINOR.PATCH)
+
+Version is stored in `package.json` only (single source of truth).
+
+| Change Type | Bump | Example |
+|-------------|------|---------|
+| Bug fix, printer compatibility | PATCH | 1.0.0 → 1.0.1 |
+| New feature, new API endpoint | MINOR | 1.0.1 → 1.1.0 |
+| Breaking API change, major rewrite | MAJOR | 1.1.0 → 2.0.0 |
+
+### Release Workflow
+
+1. Update version in `package.json`
+2. Commit: `git commit -m "Release vX.Y.Z"`
+3. Tag: `git tag vX.Y.Z`
+4. Push: `git push && git push --tags`
+5. GitHub Actions builds and publishes Windows installer
+
+### Version Bump Commands
+
+```bash
+# Patch (bug fix)
+npm version patch
+
+# Minor (new feature)
+npm version minor
+
+# Major (breaking change)
+npm version major
+```
+
+## Build
+
+```bash
+# Windows installer
+bun run build:win
+
+# Output: dist/Label-Printer-Server-Setup-{version}.exe
+```
+
+## Project Structure
+
+```
+src/
+├── main.js              # Electron main process
+├── index.html           # Dashboard UI
+├── api/
+│   └── server.js        # Express REST API (port 9632)
+├── config/
+│   ├── page-configs.js  # Label layout configurations
+│   └── settings.js      # User settings management
+├── printer/
+│   ├── printer-manager.js  # USB printer control
+│   ├── print-queue.js      # Job queue management
+│   └── tspl-generator.js   # TSPL command generation
+├── utils/
+│   └── logger.js        # Winston logger
+└── wizard/
+    ├── wizard.html      # Setup wizard UI
+    └── wizard.js        # Wizard logic
+```
+
+## Configuration
+
+User settings stored at:
+- Windows: `%APPDATA%/label-printer-server/config.json`
+- macOS: `~/Library/Application Support/label-printer-server/config.json`
+
+### Config Schema
+
+```json
+{
+  "version": "1.0.0",
+  "printer": {
+    "vendorId": 1234,
+    "productId": 5678,
+    "name": "Printer Name"
+  },
+  "network": {
+    "port": 9632
+  },
+  "defaults": {
+    "pageConfig": "default"
+  },
+  "startup": {
+    "launchOnBoot": true,
+    "startMinimized": false
+  },
+  "setupCompleted": true
+}
+```
+
+## Auto-Updater
+
+- Checks GitHub releases on app start
+- Downloads updates silently in background
+- Installs on app quit (silent update on quit)
+- Uses electron-updater with GitHub releases as update server
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /health | Health check + status |
+| GET | /printers | List USB printers |
+| POST | /printers/connect | Connect to printer |
+| POST | /printers/disconnect | Disconnect printer |
+| GET | /printers/status | Printer status |
+| GET | /configs | Label configurations |
+| POST | /print | Queue print job |
+| POST | /print/custom | Custom TSPL job |
+| GET | /jobs | List jobs |
+| GET | /jobs/:id | Get job |
+| DELETE | /jobs/:id | Cancel/delete job |
+| GET | /queue/stats | Queue statistics |
+| POST | /queue/clear | Clear completed jobs |

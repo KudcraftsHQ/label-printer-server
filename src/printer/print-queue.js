@@ -213,8 +213,11 @@ class PrintQueue {
         const generator = new TSPLGenerator(job.pageConfig);
         job.tspl = generator.generateProductLabel({
           qrData: job.label.qrData,
+          barcodeData: job.label.barcodeData,
           title: job.label.title,
           subtitle: job.label.subtitle,
+          itemQuantity: job.label.itemQuantity,
+          layout: job.label.layout || 'barcode',
           quantity: job.quantity
         });
       }

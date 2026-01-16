@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup - Label Printer Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #fafafa;
+      --bg-white: #ffffff;
+      --bg-subtle: #f4f4f5;
+      --border-color: #e4e4e7;
+      --border-light: #f4f4f5;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-muted: #a1a1aa;
+      --accent: #6366f1;
+      --accent-light: #eef2ff;
+      --accent-hover: #4f46e5;
+      --success: #22c55e;
+      --success-light: #f0fdf4;
+      --danger: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wizard-container {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-width: 520px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .wizard-header {
+      padding: 32px 32px 24px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .wizard-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .wizard-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .progress-step {
+      flex: 1;
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 2px;
+      transition: background 0.3s ease;
+    }
+
+    .progress-step.active {
+      background: var(--accent);
+    }
+
+    .progress-step.completed {
+      background: var(--success);
+    }
+
+    .wizard-content {
+      padding: 32px;
+      min-height: 320px;
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .step ul {
+      margin: 0 0 24px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .step ul li {
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-white);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .checkbox-item:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-item .checkbox-content {
+      flex: 1;
+    }
+
+    .checkbox-item .checkbox-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .checkbox-item .checkbox-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .printer-list {
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .printer-card {
+      padding: 14px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .printer-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .printer-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .printer-card .printer-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .printer-card .printer-details {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .code-preview {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .summary-list {
+      margin-top: 16px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 14px;
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+    }
+
+    .summary-value {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--success-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+      color: var(--success);
+    }
+
+    .wizard-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 32px;
+      background: var(--bg-subtle);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-subtle);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .btn-link:hover {
+      color: var(--text-secondary);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <h1>Welcome to Label Printer Server</h1>
+      <p>Let's get your printer configured in a few simple steps.</p>
+      <div class="progress-bar">
+        <div class="progress-step active" data-step="1"></div>
+        <div class="progress-step" data-step="2"></div>
+        <div class="progress-step" data-step="3"></div>
+        <div class="progress-step" data-step="4"></div>
+        <div class="progress-step" data-step="5"></div>
+        <div class="progress-step" data-step="6"></div>
+      </div>
+    </div>
+
+    <div class="wizard-content">
+      <!-- Step 1: Welcome -->
+      <div class="step active" data-step="1">
+        <h2>Getting Started</h2>
+        <p>This setup wizard will configure:</p>
+        <ul>
+          <li>USB thermal printer connection</li>
+          <li>Server port settings</li>
+          <li>Default label configuration</li>
+          <li>Startup preferences</li>
+        </ul>
+        <p>Click <strong>Next</strong> to begin.</p>
+      </div>
+
+      <!-- Step 2: Printer Selection -->
+      <div class="step" data-step="2">
+        <h2>Select Printer</h2>
+        <p>Choose the USB thermal printer you want to use:</p>
+        <div id="printer-list" class="printer-list">
+          <div class="loading">Scanning for devices...</div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-secondary" onclick="scanPrinters()">Rescan</button>
+          <button class="btn-link" onclick="skipPrinterSelection()" style="margin-left: auto;">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Network Settings -->
+      <div class="step" data-step="3">
+        <h2>Network Settings</h2>
+        <p>Configure the API server port. The default is recommended for most users.</p>
+        <div class="form-group">
+          <label for="port">Server Port</label>
+          <input type="number" id="port" value="9632" min="1024" max="65535">
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">
+          Applications connect via:
+          <div class="code-preview">http://localhost:<span id="port-preview">9632</span></div>
+        </div>
+      </div>
+
+      <!-- Step 4: Label Defaults -->
+      <div class="step" data-step="4">
+        <h2>Label Configuration</h2>
+        <p>Choose your default label size:</p>
+        <div class="form-group">
+          <label for="page-config">Default Page Size</label>
+          <select id="page-config">
+            <option value="default">Default (3x33mm labels)</option>
+            <option value="single_large">Single Large (60mm label)</option>
+            <option value="double">Double (2x40mm labels)</option>
+            <option value="small_quad">Small Quad (4x25mm labels)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 5: Startup Options -->
+      <div class="step" data-step="5">
+        <h2>Startup Options</h2>
+        <p>Configure how the application starts:</p>
+        <div class="checkbox-item" onclick="toggleCheckbox('launch-on-boot')">
+          <input type="checkbox" id="launch-on-boot">
+          <div class="checkbox-content">
+            <div class="checkbox-title">Start on system boot</div>
+            <div class="checkbox-desc">Automatically launch when you log in</div>
+          </div>
+        </div>
+        <div class="checkbox-item" onclick="toggleCheckbox('start-minimized')">
+          <input type="checkbox" id="start-minimized">
+          <div class="checkbox-content">
+            <div class="checkbox-title">Start minimized</div>
+            <div class="checkbox-desc">Run in background without showing window</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Summary -->
+      <div class="step" data-step="6">
+        <div class="success-icon">✓</div>
+        <h2 style="text-align: center;">All Done!</h2>
+        <p style="text-align: center;">Your settings have been configured:</p>
+        <div class="summary-list">
+          <div class="summary-item">
+            <span class="summary-label">Printer</span>
+            <span class="summary-value" id="summary-printer">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Server Port</span>
+            <span class="summary-value" id="summary-port">9632</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Default Label</span>
+            <span class="summary-value" id="summary-label">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Auto-start</span>
+            <span class="summary-value" id="summary-autostart">No</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button class="btn btn-secondary" id="btn-back" onclick="prevStep()" disabled>Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 6;
+    let printers = [];
+    let selectedPrinter = null;
+    let apiPort = 9632;
+
+    const config = {
+      printer: null,
+      network: { port: 9632 },
+      defaults: { pageConfig: 'default' },
+      startup: { launchOnBoot: false, startMinimized: false }
+    };
+
+    function toHex(num) {
+      return '0x' + num.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function updateProgress() {
+      document.querySelectorAll('.progress-step').forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+    }
+
+    function showStep(step) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+
+      document.getElementById('btn-back').disabled = step === 1;
+
+      if (step === totalSteps) {
+        document.getElementById('btn-next').textContent = 'Finish';
+        updateSummary();
+      } else {
+        document.getElementById('btn-next').textContent = 'Next';
+      }
+
+      document.getElementById('btn-next').disabled = false;
+      updateProgress();
+    }
+
+    function nextStep() {
+      if (currentStep === totalSteps) {
+        finishSetup();
+        return;
+      }
+
+      if (currentStep === 2) {
+        config.printer = selectedPrinter;
+      } else if (currentStep === 3) {
+        config.network.port = parseInt(document.getElementById('port').value) || 9632;
+      } else if (currentStep === 4) {
+        config.defaults.pageConfig = document.getElementById('page-config').value;
+      } else if (currentStep === 5) {
+        config.startup.launchOnBoot = document.getElementById('launch-on-boot').checked;
+        config.startup.startMinimized = document.getElementById('start-minimized').checked;
+      }
+
+      currentStep++;
+      showStep(currentStep);
+
+      if (currentStep === 2) {
+        scanPrinters();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    }
+
+    function skipPrinterSelection() {
+      selectedPrinter = null;
+      config.printer = null;
+      nextStep();
+    }
+
+    async function scanPrinters() {
+      const listDiv = document.getElementById('printer-list');
+      listDiv.innerHTML = '<div class="loading">Scanning for devices...</div>';
+
+      try {
+        const response = await fetch(`http://localhost:${apiPort}/printers`);
+        const data = await response.json();
+
+        if (data.success && data.printers.length > 0) {
+          printers = data.printers;
+          renderPrinters();
+        } else {
+          listDiv.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔌</div>
+              <div class="empty-state-text">No USB printers detected</div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error scanning printers:', error);
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-text">Error scanning for printers</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderPrinters() {
+      const listDiv = document.getElementById('printer-list');
+      listDiv.innerHTML = printers.map((printer, index) => {
+        const isSelected = selectedPrinter &&
+          selectedPrinter.vendorId === printer.vendorId &&
+          selectedPrinter.productId === printer.productId;
+
+        return `
+          <div class="printer-card ${isSelected ? 'selected' : ''}" onclick="selectPrinter(${index})">
+            <div class="printer-name">${printer.product || 'Unknown Device'}</div>
+            <div class="printer-details">
+              ${printer.manufacturer || 'Unknown'} · VID: ${toHex(printer.vendorId)} · PID: ${toHex(printer.productId)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectPrinter(index) {
+      selectedPrinter = printers[index];
+      renderPrinters();
+    }
+
+    function toggleCheckbox(id) {
+      const checkbox = document.getElementById(id);
+      checkbox.checked = !checkbox.checked;
+    }
+
+    document.getElementById('port').addEventListener('input', function() {
+      document.getElementById('port-preview').textContent = this.value || '9632';
+    });
+
+    function updateSummary() {
+      document.getElementById('summary-printer').textContent =
+        config.printer ? (config.printer.product || 'Unknown Device') : 'None selected';
+      document.getElementById('summary-port').textContent = config.network.port;
+
+      const labelNames = {
+        'default': 'Default (3x33mm)',
+        'single_large': 'Single Large (60mm)',
+        'double': 'Double (2x40mm)',
+        'small_quad': 'Small Quad (4x25mm)'
+      };
+      document.getElementById('summary-label').textContent =
+        labelNames[config.defaults.pageConfig] || config.defaults.pageConfig;
+
+      document.getElementById('summary-autostart').textContent =
+        config.startup.launchOnBoot ? 'Yes' : 'No';
+    }
+
+    async function finishSetup() {
+      const btn = document.getElementById('btn-next');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        if (window.electronAPI) {
+          await window.electronAPI.saveConfig(config);
+        } else {
+          localStorage.setItem('wizardConfig', JSON.stringify(config));
+        }
+
+        if (window.electronAPI) {
+          window.electronAPI.wizardComplete();
+        } else {
+          window.location.href = '../index.html';
+        }
+      } catch (error) {
+        console.error('Error saving config:', error);
+        btn.disabled = false;
+        btn.textContent = 'Finish';
+        alert('Error saving configuration. Please try again.');
+      }
+    }
+
+    showStep(1);
+  </script>
+</body>
+</html>

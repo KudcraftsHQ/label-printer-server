@@ -7,7 +7,7 @@ const { getPrintQueue } = require('../printer/print-queue');
 const { getAllPageConfigs } = require('../config/page-configs');
 
 const app = express();
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 9632;
 
 // Middleware
 app.use(cors());
@@ -217,11 +217,11 @@ app.post('/print', (req, res) => {
   try {
     const { pageConfig, label, quantity } = req.body;
 
-    // Validate required fields
-    if (!label || !label.qrData || !label.title) {
+    // Validate required fields - title is required, barcode/qr is optional
+    if (!label || !label.title) {
       return res.status(400).json({
         success: false,
-        error: 'label.qrData and label.title are required'
+        error: 'label.title is required'
       });
     }
 

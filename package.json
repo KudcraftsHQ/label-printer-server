@@ -26,15 +26,17 @@
     "qrcode": "^1.5.3",
     "usb": "^2.11.0",
     "winston": "^3.11.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "electron-auto-launch": "^5.0.7"
   },
   "devDependencies": {
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
+    "electron-updater": "^6.1.7",
     "nodemon": "^3.0.2"
   },
   "build": {
-    "appId": "com.labelprinter.app",
+    "appId": "com.kudcrafts.labelprinter",
     "productName": "Label Printer Server",
     "directories": {
       "output": "dist"
@@ -43,11 +45,22 @@
       "src/**/*",
       "package.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "KudcraftsHQ",
+      "repo": "label-printer-server"
+    },
     "win": {
       "target": [
         "nsis"
       ],
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "mac": {
       "target": [
