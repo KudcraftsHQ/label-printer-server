@@ -33,3 +33,4 @@ out/
 .tldr/daemon.pid
 .claude/tsc-cache/
 .tldr/cache/
+.tldr/
