@@ -85,6 +85,41 @@ function createMenu() {
             }
           }
         },
+        {
+          label: 'Check for Updates',
+          click: () => {
+            if (autoUpdater) {
+              autoUpdater.checkForUpdates().then(result => {
+                if (!result || !result.updateInfo) {
+                  const { dialog } = require('electron');
+                  dialog.showMessageBox({
+                    type: 'info',
+                    title: 'No Updates',
+                    message: 'You are running the latest version.',
+                    buttons: ['OK']
+                  });
+                }
+              }).catch(err => {
+                logger.warn('Manual update check failed:', err.message);
+                const { dialog } = require('electron');
+                dialog.showMessageBox({
+                  type: 'error',
+                  title: 'Update Check Failed',
+                  message: `Could not check for updates: ${err.message}`,
+                  buttons: ['OK']
+                });
+              });
+            } else {
+              const { dialog } = require('electron');
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'Updates Not Available',
+                message: 'Auto-updater is only available in production builds.',
+                buttons: ['OK']
+              });
+            }
+          }
+        },
         { type: 'separator' },
         {
           label: 'Quit',
@@ -200,6 +235,13 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-available', (info) => {
     logger.info('Update available:', info.version);
+    const { dialog } = require('electron');
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: `Version ${info.version} is available and will be downloaded automatically.`,
+      buttons: ['OK']
+    });
   });
 
   autoUpdater.on('update-not-available', () => {
@@ -212,7 +254,17 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-downloaded', (info) => {
     logger.info('Update downloaded:', info.version);
-    // Will install on app quit
+    const { dialog } = require('electron');
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded and will be installed when you quit the app.`,
+      buttons: ['OK', 'Restart Now']
+    }).then(result => {
+      if (result.response === 1) {
+        autoUpdater.quitAndInstall();
+      }
+    });
   });
 
   autoUpdater.on('error', (err) => {

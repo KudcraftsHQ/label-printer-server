@@ -5,6 +5,7 @@ const { logger } = require('../utils/logger');
 const { getPrinterManager, isWindows } = require('../printer/printer-manager');
 const { getPrintQueue } = require('../printer/print-queue');
 const { getAllPageConfigs } = require('../config/page-configs');
+const packageJson = require('../../package.json');
 
 const app = express();
 const DEFAULT_PORT = 9632;
@@ -33,7 +34,7 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.json({
     name: 'Label Printer Server',
-    version: '1.0.0',
+    version: packageJson.version,
     description: 'Local API server for TSPL label printing',
     endpoints: {
       'GET /': 'API information',
