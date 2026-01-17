@@ -255,9 +255,7 @@ Get all available page configurations.
       "pageWidth": 105,
       "pageHeight": 18
     },
-    "single_large": { ... },
-    "double": { ... },
-    "small_quad": { ... }
+    "double_50x20": { ... }
   }
 }
 ```
@@ -430,28 +428,20 @@ Clear all completed and cancelled jobs.
 The application supports multiple page configurations for different label sizes:
 
 ### Default (3x33mm)
+- Config ID: `default`
 - 3 stickers per row
 - Sticker size: 33mm × 15mm
 - Gap between stickers: 3mm
 - Outer margin: 1.5mm
 - Total page width: 105mm
 
-### Single Large (60mm)
-- 1 sticker per row
-- Sticker size: 60mm × 40mm
-- Outer margin: 2mm
-
-### Double (2x40mm)
+### Double 50x20 (2x50mm)
+- Config ID: `double_50x20`
 - 2 stickers per row
-- Sticker size: 40mm × 20mm
+- Sticker size: 50mm × 20mm
 - Gap between stickers: 3mm
-- Outer margin: 2mm
-
-### Small Quad (4x25mm)
-- 4 stickers per row
-- Sticker size: 25mm × 12mm
-- Gap between stickers: 2mm
 - Outer margin: 1.5mm
+- Total page width: 106mm
 
 ## TSPL Reference
 

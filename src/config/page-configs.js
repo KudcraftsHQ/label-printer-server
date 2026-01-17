@@ -27,58 +27,16 @@ const PAGE_CONFIGS = {
     }
   },
 
-  // Single sticker per row, larger size
-  single_large: {
-    name: 'Single Large (60mm)',
+  // 2 stickers per row, 50mm x 20mm each
+  double_50x20: {
+    name: 'Double (2x50mm)',
     sticker: {
-      width: 60,
-      height: 40,
-    },
-    layout: {
-      columns: 1,
-      gap: 0,
-      outerMargin: 2
-    },
-    get pageWidth() {
-      return this.sticker.width + (this.layout.outerMargin * 2);
-    },
-    get pageHeight() {
-      return this.sticker.height + (this.layout.outerMargin * 2);
-    }
-  },
-
-  // 2 stickers per row
-  double: {
-    name: 'Double (2x40mm)',
-    sticker: {
-      width: 40,
+      width: 50,
       height: 20,
     },
     layout: {
       columns: 2,
       gap: 3,
-      outerMargin: 2
-    },
-    get pageWidth() {
-      return (this.sticker.width * this.layout.columns) +
-             (this.layout.gap * (this.layout.columns - 1)) +
-             (this.layout.outerMargin * 2);
-    },
-    get pageHeight() {
-      return this.sticker.height + (this.layout.outerMargin * 2);
-    }
-  },
-
-  // Small labels - 4 per row
-  small_quad: {
-    name: 'Small Quad (4x25mm)',
-    sticker: {
-      width: 25,
-      height: 12,
-    },
-    layout: {
-      columns: 4,
-      gap: 2,
       outerMargin: 1.5
     },
     get pageWidth() {
