@@ -493,6 +493,50 @@ class TSPLGenerator {
   }
 
   /**
+   * Find optimal font and line count for text
+   * Priority: fewer lines with larger fonts (more readable)
+   *
+   * Algorithm:
+   * 1. Try 1 line with fonts 4→3→2→1
+   * 2. Try 2 lines with fonts 4→3→2→1
+   * 3. Try 3 lines with fonts 4→3→2→1
+   *
+   * @param {string} text - Text to fit
+   * @param {number} widthMm - Available width in mm
+   * @param {number} maxLines - Maximum lines allowed (1, 2, or 3)
+   * @param {number} maxFont - Maximum font to try (1-4, default 3)
+   * @returns {object} { font, lines, fits }
+   */
+  findOptimalLayout(text, widthMm, maxLines, maxFont = 3) {
+    if (!text) return { font: maxFont, lines: [], fits: true };
+
+    // Outer loop: prefer fewer lines (more compact)
+    for (let targetLines = 1; targetLines <= maxLines; targetLines++) {
+      // Inner loop: prefer larger font (more readable)
+      for (let fontNum = Math.min(maxFont, LAYOUT_CONFIG.MAX_FONT_SIZE);
+           fontNum >= LAYOUT_CONFIG.MIN_FONT_SIZE;
+           fontNum--) {
+
+        const lines = this.wrapText(text, widthMm, fontNum, targetLines);
+        const wrappedLength = lines.reduce((sum, line) => sum + line.length, 0);
+
+        // All text preserved? This is optimal for this line count
+        if (wrappedLength >= text.length) {
+          return { font: fontNum, lines, fits: true };
+        }
+      }
+    }
+
+    // Fallback: smallest font, max lines (may truncate)
+    const fallbackLines = this.wrapText(text, widthMm, LAYOUT_CONFIG.MIN_FONT_SIZE, maxLines);
+    return {
+      font: LAYOUT_CONFIG.MIN_FONT_SIZE,
+      lines: fallbackLines,
+      fits: false
+    };
+  }
+
+  /**
    * Calculate text width in mm for a given text and font
    * @param {string} text - Text to measure
    * @param {number} fontNum - Font number (1-4)
@@ -578,6 +622,7 @@ class TSPLGenerator {
    * Layout for QR code with text (QR left-aligned, text vertically distributed)
    * Supports 3 fields: title (SKU - bold), subtitle (Batch), quantity
    * Layout: SKU at top, Batch in middle, Qty at bottom
+   * Uses dynamic font sizing: fewer lines with larger fonts preferred
    * @private
    */
   _layoutQR(x, y, width, height, title, subtitle, qrData, quantity) {
@@ -604,27 +649,37 @@ class TSPLGenerator {
       return;
     }
 
-    // Dynamic font for SKU - use larger font if it fits, smaller for long SKUs
-    const titleMaxLines = 3;
-    const font2MaxChars = this.getMaxCharsForWidth(textWidth, 2) * titleMaxLines;
-    const skuFont = (title && title.length <= font2MaxChars) ? 2 : 1;
-    const skuLineHeight = this.getFontHeightMm(skuFont);
-    const smallFont = 1;
-    const smallLineHeight = this.getFontHeightMm(smallFont);
     const lineSpacing = 0.5; // mm between lines
 
-    const hasSubtitle = !!subtitle;
-    const hasQuantity = quantity !== undefined && quantity !== null;
-    const subtitleMaxLines = 2;
+    // Find optimal layout for title (SKU) - max 3 lines, max font 3
+    // Priority: 1 line large font > 2 lines large font > 3 lines smaller font
+    const titleLayout = title
+      ? this.findOptimalLayout(title, textWidth, 3, 3)
+      : { font: 3, lines: [], fits: true };
+    const titleLines = titleLayout.lines;
+    const skuFont = titleLayout.font;
+    const skuLineHeight = this.getFontHeightMm(skuFont);
 
-    // Wrap text to fit within available width
-    const titleLines = title ? this.wrapText(title, textWidth, skuFont, titleMaxLines) : [];
-    const subtitleLines = hasSubtitle ? this.wrapText(subtitle, textWidth, smallFont, subtitleMaxLines) : [];
+    // Find optimal layout for subtitle (Batch) - max 2 lines, max font 2
+    const hasSubtitle = !!subtitle;
+    const subtitleLayout = hasSubtitle
+      ? this.findOptimalLayout(subtitle, textWidth, 2, 2)
+      : { font: 1, lines: [], fits: true };
+    const subtitleLines = subtitleLayout.lines;
+    const subtitleFont = subtitleLayout.font;
+    const subtitleLineHeight = this.getFontHeightMm(subtitleFont);
+
+    // Quantity uses fixed small font
+    const hasQuantity = quantity !== undefined && quantity !== null;
+    const qtyFont = 1;
+    const qtyLineHeight = this.getFontHeightMm(qtyFont);
 
     // Calculate total content height
-    const titleHeight = titleLines.length * skuLineHeight + (titleLines.length > 1 ? (titleLines.length - 1) * lineSpacing : 0);
-    const subtitleHeight = subtitleLines.length * smallLineHeight + (subtitleLines.length > 1 ? (subtitleLines.length - 1) * lineSpacing : 0);
-    const qtyHeight = hasQuantity ? smallLineHeight : 0;
+    const titleHeight = titleLines.length * skuLineHeight +
+      (titleLines.length > 1 ? (titleLines.length - 1) * lineSpacing : 0);
+    const subtitleHeight = subtitleLines.length * subtitleLineHeight +
+      (subtitleLines.length > 1 ? (subtitleLines.length - 1) * lineSpacing : 0);
+    const qtyHeight = hasQuantity ? qtyLineHeight : 0;
 
     // Calculate spacing between sections
     const numSections = (titleLines.length > 0 ? 1 : 0) + (subtitleLines.length > 0 ? 1 : 0) + (hasQuantity ? 1 : 0);
@@ -635,7 +690,7 @@ class TSPLGenerator {
     // Start rendering from top with calculated spacing
     let currentY = y + sectionGap;
 
-    // Render SKU (title) - bold/prominent, wrapped
+    // Render SKU (title) - dynamic font, wrapped
     for (const line of titleLines) {
       if (currentY + skuLineHeight > y + height) break;
       this.addText({
@@ -654,29 +709,29 @@ class TSPLGenerator {
       currentY += sectionGap - lineSpacing;
     }
 
-    // Render Batch (subtitle) - wrapped
+    // Render Batch (subtitle) - dynamic font, wrapped
     for (const line of subtitleLines) {
-      if (currentY + smallLineHeight > y + height) break;
+      if (currentY + subtitleLineHeight > y + height) break;
       this.addText({
         x: textX,
         y: currentY,
         text: line,
-        font: String(smallFont),
+        font: String(subtitleFont),
         xMul: 1,
         yMul: 1
       });
-      currentY += smallLineHeight + lineSpacing;
+      currentY += subtitleLineHeight + lineSpacing;
     }
 
     // Render Qty at bottom (fixed position)
     if (hasQuantity) {
-      const qtyY = y + height - smallLineHeight;
+      const qtyY = y + height - qtyLineHeight;
       const qtyText = `Qty: ${quantity}`;
       this.addText({
         x: textX,
         y: qtyY,
         text: qtyText,
-        font: String(smallFont),
+        font: String(qtyFont),
         xMul: 1,
         yMul: 1
       });
