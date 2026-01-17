@@ -31,3 +31,5 @@ Thumbs.db
 # Electron
 out/
 .tldr/daemon.pid
+.claude/tsc-cache/
+.tldr/cache/

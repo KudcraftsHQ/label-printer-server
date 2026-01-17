@@ -85,41 +85,6 @@ function createMenu() {
             }
           }
         },
-        {
-          label: 'Check for Updates',
-          click: () => {
-            if (autoUpdater) {
-              autoUpdater.checkForUpdates().then(result => {
-                if (!result || !result.updateInfo) {
-                  const { dialog } = require('electron');
-                  dialog.showMessageBox({
-                    type: 'info',
-                    title: 'No Updates',
-                    message: 'You are running the latest version.',
-                    buttons: ['OK']
-                  });
-                }
-              }).catch(err => {
-                logger.warn('Manual update check failed:', err.message);
-                const { dialog } = require('electron');
-                dialog.showMessageBox({
-                  type: 'error',
-                  title: 'Update Check Failed',
-                  message: `Could not check for updates: ${err.message}`,
-                  buttons: ['OK']
-                });
-              });
-            } else {
-              const { dialog } = require('electron');
-              dialog.showMessageBox({
-                type: 'info',
-                title: 'Updates Not Available',
-                message: 'Auto-updater is only available in production builds.',
-                buttons: ['OK']
-              });
-            }
-          }
-        },
         { type: 'separator' },
         {
           label: 'Quit',
@@ -151,6 +116,46 @@ function createMenu() {
         { role: 'resetZoom' },
         { role: 'zoomIn' },
         { role: 'zoomOut' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Check for Updates',
+          click: () => {
+            if (autoUpdater) {
+              autoUpdater.checkForUpdates().then(result => {
+                if (!result || !result.updateInfo) {
+                  const { dialog } = require('electron');
+                  dialog.showMessageBox({
+                    type: 'info',
+                    title: 'No Updates',
+                    message: 'You are running the latest version.',
+                    buttons: ['OK']
+                  });
+                }
+              }).catch(err => {
+                logger.warn('Manual update check failed:', err.message);
+                const { dialog } = require('electron');
+                dialog.showMessageBox({
+                  type: 'error',
+                  title: 'Update Check Failed',
+                  message: `Could not check for updates: ${err.message}`,
+                  buttons: ['OK']
+                });
+              });
+            } else {
+              const { dialog } = require('electron');
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'Development Mode',
+                message: 'Update checking is only available in packaged builds.\n\nRun "bun run build:win" to create an installer with auto-update support.',
+                buttons: ['OK']
+              });
+            }
+          }
+        }
       ]
     }
   ];
