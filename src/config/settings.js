@@ -10,7 +10,8 @@ const DEFAULT_CONFIG = {
     port: 9632
   },
   defaults: {
-    pageConfig: 'default'
+    pageConfig: 'default',
+    padding: 1.5
   },
   startup: {
     launchOnBoot: false,
@@ -162,6 +163,24 @@ function saveDefaultPageConfig(pageConfig) {
 }
 
 /**
+ * Get default padding (in mm)
+ */
+function getDefaultPadding() {
+  const cfg = getConfig();
+  return cfg.defaults?.padding ?? 1.5;
+}
+
+/**
+ * Save default padding (in mm)
+ */
+function saveDefaultPadding(padding) {
+  const cfg = getConfig();
+  saveConfig({
+    defaults: { ...cfg.defaults, padding }
+  });
+}
+
+/**
  * Reset configuration to defaults
  */
 function resetConfig() {
@@ -183,6 +202,8 @@ module.exports = {
   saveStartupSettings,
   getDefaultPageConfig,
   saveDefaultPageConfig,
+  getDefaultPadding,
+  saveDefaultPadding,
   resetConfig,
   getConfigPath
 };
