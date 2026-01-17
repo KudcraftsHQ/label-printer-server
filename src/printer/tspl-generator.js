@@ -741,14 +741,13 @@ class TSPLGenerator {
       currentY += subtitleLineHeight + lineSpacing;
     }
 
-    // Render Qty at bottom (fixed position)
+    // Render Qty text at bottom (fixed position)
     if (hasQuantity) {
       const qtyY = y + height - qtyLineHeight;
-      const qtyText = `Qty: ${quantity}`;
       this.addText({
         x: textX,
         y: qtyY,
-        text: qtyText,
+        text: String(quantity),
         font: String(qtyFont),
         xMul: 1,
         yMul: 1
@@ -873,7 +872,7 @@ class TSPLGenerator {
    * @param {string} data.barcodeData - Data for barcode
    * @param {string} data.title - Title text (SKU) - max 22 chars for QR layout
    * @param {string} data.subtitle - Subtitle text (Batch) - max 34 chars for QR layout
-   * @param {number} data.itemQuantity - Item quantity to display on label (for QR layout)
+   * @param {string} data.itemQuantity - Quantity text to display on label (for QR layout)
    * @param {number} data.quantity - Number of labels to print (rows)
    * @param {string} data.layout - Layout type: 'barcode' (default), 'qr', 'text-only'
    * @returns {string} TSPL commands

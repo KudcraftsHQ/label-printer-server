@@ -90,9 +90,7 @@
                 <label class="block text-xs font-medium text-zinc-700 mb-1.5">Page Config</label>
                 <select id="test-config" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                   <option value="default">Default (3x33mm)</option>
-                  <option value="single_large">Single Large (60mm)</option>
-                  <option value="double">Double (2x40mm)</option>
-                  <option value="small_quad">Small Quad (4x25mm)</option>
+                  <option value="double_50x20">Double (2x50mm)</option>
                 </select>
               </div>
               <div>
@@ -142,8 +140,8 @@
             <!-- Quantity Row -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-zinc-700 mb-1.5">Item Qty <span class="text-zinc-400">(on label)</span></label>
-                <input type="number" id="test-item-quantity" min="1" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="e.g., 50">
+                <label class="block text-xs font-medium text-zinc-700 mb-1.5">Qty Text <span class="text-zinc-400">(on label)</span></label>
+                <input type="text" id="test-item-quantity" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="e.g., Qty: 50 pcs">
               </div>
               <div>
                 <label class="block text-xs font-medium text-zinc-700 mb-1.5">Labels to Print</label>
@@ -563,7 +561,7 @@
               subtitle: subtitle || undefined,
               barcodeData: barcodeData || undefined,
               qrData: barcodeData || undefined,
-              itemQuantity: itemQuantity ? parseInt(itemQuantity) : undefined,
+              itemQuantity: itemQuantity || undefined,
               layout
             },
             quantity
