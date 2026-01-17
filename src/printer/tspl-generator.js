@@ -30,10 +30,22 @@ const LAYOUT_CONFIG = {
  * Generates TSPL commands for printing labels
  */
 class TSPLGenerator {
-  constructor(pageConfigId = 'default') {
-    this.pageConfig = getPageConfig(pageConfigId);
+  /**
+   * Create a TSPL generator
+   * @param {string|object} options - Page config ID string, or options object
+   * @param {string} options.pageConfigId - Page configuration ID (default: 'default')
+   * @param {number} options.padding - Internal padding in mm (default: 1.5)
+   */
+  constructor(options = 'default') {
+    // Support both string (pageConfigId) and object (options) for backwards compatibility
+    if (typeof options === 'string') {
+      this.pageConfig = getPageConfig(options);
+      this.padding = LAYOUT_CONFIG.PADDING;
+    } else {
+      this.pageConfig = getPageConfig(options.pageConfigId || 'default');
+      this.padding = options.padding !== undefined ? options.padding : LAYOUT_CONFIG.PADDING;
+    }
     this.commands = [];
-    this.padding = LAYOUT_CONFIG.PADDING;
     this.fullRowMode = false; // Track if using full row width (multi-column)
   }
 

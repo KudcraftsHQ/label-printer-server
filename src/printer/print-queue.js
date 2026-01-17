@@ -30,6 +30,7 @@ class PrintQueue {
    * @param {string} jobData.pageConfig - Page configuration ID
    * @param {object} jobData.label - Label data
    * @param {number} jobData.quantity - Number of copies
+   * @param {number} jobData.padding - Internal padding in mm (optional, default: 1.5)
    * @returns {object} Created job
    */
   addJob(jobData) {
@@ -39,6 +40,7 @@ class PrintQueue {
       pageConfig: jobData.pageConfig || 'default',
       label: jobData.label,
       quantity: jobData.quantity || 1,
+      padding: jobData.padding,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       error: null,
@@ -90,6 +92,7 @@ class PrintQueue {
    * @param {object} jobData - Job data
    * @param {string} jobData.pageConfig - Page configuration ID
    * @param {Array} jobData.labels - Array of label objects {title, subtitle, qrData}
+   * @param {number} jobData.padding - Internal padding in mm (optional, default: 1.5)
    * @returns {object} Created job
    */
   addBatchJob(jobData) {
@@ -99,6 +102,7 @@ class PrintQueue {
       pageConfig: jobData.pageConfig || 'default',
       labels: jobData.labels,  // Array of label objects
       isBatch: true,
+      padding: jobData.padding,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       error: null,
@@ -240,7 +244,10 @@ class PrintQueue {
     try {
       // Generate TSPL if not already provided
       if (!job.tspl) {
-        const generator = new TSPLGenerator(job.pageConfig);
+        const generator = new TSPLGenerator({
+          pageConfigId: job.pageConfig,
+          padding: job.padding
+        });
 
         if (job.isBatch) {
           // Batch job: generate labels for multiple unique items
