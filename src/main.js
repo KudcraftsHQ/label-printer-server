@@ -212,11 +212,16 @@ ipcMain.handle('wizard-complete', async () => {
   if (savedPrinter) {
     try {
       const printerManager = getPrinterManager();
-      printerManager.connect({
-        vendorId: savedPrinter.vendorId,
-        productId: savedPrinter.productId
-      });
-      logger.info('Connected to saved printer');
+      // Support both USB (vendorId/productId) and Windows (name) printers
+      if (savedPrinter.name) {
+        printerManager.connect({ name: savedPrinter.name });
+      } else if (savedPrinter.vendorId && savedPrinter.productId) {
+        printerManager.connect({
+          vendorId: savedPrinter.vendorId,
+          productId: savedPrinter.productId
+        });
+      }
+      logger.info('Connected to saved printer', savedPrinter);
     } catch (e) {
       logger.warn('Could not connect to saved printer:', e.message);
     }
@@ -305,11 +310,16 @@ app.whenReady().then(async () => {
       if (savedPrinter) {
         try {
           const printerManager = getPrinterManager();
-          printerManager.connect({
-            vendorId: savedPrinter.vendorId,
-            productId: savedPrinter.productId
-          });
-          logger.info('Auto-connected to saved printer');
+          // Support both USB (vendorId/productId) and Windows (name) printers
+          if (savedPrinter.name) {
+            printerManager.connect({ name: savedPrinter.name });
+          } else if (savedPrinter.vendorId && savedPrinter.productId) {
+            printerManager.connect({
+              vendorId: savedPrinter.vendorId,
+              productId: savedPrinter.productId
+            });
+          }
+          logger.info('Auto-connected to saved printer', savedPrinter);
         } catch (e) {
           logger.warn('Could not auto-connect to printer:', e.message);
         }

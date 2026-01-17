@@ -5,6 +5,7 @@ const { logger } = require('../utils/logger');
 const { getPrinterManager, isWindows } = require('../printer/printer-manager');
 const { getPrintQueue } = require('../printer/print-queue');
 const { getAllPageConfigs } = require('../config/page-configs');
+const settings = require('../config/settings');
 const packageJson = require('../../package.json');
 
 const app = express();
@@ -115,6 +116,8 @@ app.post('/printers/connect', (req, res) => {
         });
       }
       printerManager.connect({ name });
+      // Save to settings for auto-connect on next app start
+      settings.savePrinter({ name });
       res.json({
         success: true,
         message: 'Connected to printer',
@@ -128,6 +131,8 @@ app.post('/printers/connect', (req, res) => {
         });
       }
       printerManager.connect({ vendorId, productId });
+      // Save to settings for auto-connect on next app start
+      settings.savePrinter({ vendorId, productId });
       res.json({
         success: true,
         message: 'Connected to printer',
