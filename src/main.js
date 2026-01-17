@@ -239,14 +239,7 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-available', (info) => {
-    logger.info('Update available:', info.version);
-    const { dialog } = require('electron');
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: `Version ${info.version} is available and will be downloaded automatically.`,
-      buttons: ['OK']
-    });
+    logger.info('Update available:', info.version, '- downloading silently...');
   });
 
   autoUpdater.on('update-not-available', () => {
@@ -263,11 +256,12 @@ function setupAutoUpdater() {
     dialog.showMessageBox({
       type: 'info',
       title: 'Update Ready',
-      message: `Version ${info.version} has been downloaded and will be installed when you quit the app.`,
-      buttons: ['OK', 'Restart Now']
+      message: `Version ${info.version} has been downloaded. Restart now to apply the update?`,
+      buttons: ['Later', 'Restart Now']
     }).then(result => {
       if (result.response === 1) {
-        autoUpdater.quitAndInstall();
+        // Silent install: true = silent, true = force run after install
+        autoUpdater.quitAndInstall(true, true);
       }
     });
   });
