@@ -17,12 +17,9 @@ const LAYOUT_CONFIG = {
     4: { width: 24, height: 32, name: 'large' }
   },
   // QR layout character limits (for 33x15mm sticker with 17mm text width)
-  // These ensure text is never clipped when wrapped
+  // Consistent layout: title 2 lines, subtitle 2 lines, qty 1 line (if present)
   QR_LAYOUT_LIMITS: {
-    // With quantity: title 2 lines, subtitle 1 line, qty 1 line
     TITLE_MAX_CHARS: 22,              // Font 2, 11 chars/line × 2 lines
-    SUBTITLE_MAX_CHARS_WITH_QTY: 17,  // Font 1, 17 chars/line × 1 line
-    // Without quantity: title 2 lines, subtitle 2 lines
     SUBTITLE_MAX_CHARS: 34,           // Font 1, 17 chars/line × 2 lines
     QUANTITY_MAX_CHARS: 17            // Font 1, 17 chars/line × 1 line
   }
@@ -611,50 +608,73 @@ class TSPLGenerator {
     const skuLineHeight = this.getFontHeightMm(skuFont);
     const smallFont = 1;
     const smallLineHeight = this.getFontHeightMm(smallFont);
+    const lineSpacing = 0.5; // mm between lines
 
     const hasSubtitle = !!subtitle;
     const hasQuantity = quantity !== undefined && quantity !== null;
 
-    // Calculate vertical positions for distributed layout
-    // SKU at top, Batch in middle, Qty at bottom
-    const topY = y;
-    const bottomY = y + height - smallLineHeight;
-    const middleY = y + (height - smallLineHeight) / 2;
+    // Consistent max lines for all layouts
+    const titleMaxLines = 2;
+    const subtitleMaxLines = 2;
 
-    // Render SKU (title) at TOP - bold/prominent
-    if (title) {
-      const skuMaxChars = this.getMaxCharsForWidth(textWidth, skuFont);
-      const displaySku = this.truncateText(title, skuMaxChars);
+    // Wrap text to fit within available width
+    const titleLines = title ? this.wrapText(title, textWidth, skuFont, titleMaxLines) : [];
+    const subtitleLines = hasSubtitle ? this.wrapText(subtitle, textWidth, smallFont, subtitleMaxLines) : [];
+
+    // Calculate total content height
+    const titleHeight = titleLines.length * skuLineHeight + (titleLines.length > 1 ? (titleLines.length - 1) * lineSpacing : 0);
+    const subtitleHeight = subtitleLines.length * smallLineHeight + (subtitleLines.length > 1 ? (subtitleLines.length - 1) * lineSpacing : 0);
+    const qtyHeight = hasQuantity ? smallLineHeight : 0;
+
+    // Calculate spacing between sections
+    const numSections = (titleLines.length > 0 ? 1 : 0) + (subtitleLines.length > 0 ? 1 : 0) + (hasQuantity ? 1 : 0);
+    const totalContentHeight = titleHeight + subtitleHeight + qtyHeight;
+    const availableSpace = height - totalContentHeight;
+    const sectionGap = numSections > 1 ? Math.max(0.5, availableSpace / (numSections + 1)) : 0;
+
+    // Start rendering from top with calculated spacing
+    let currentY = y + sectionGap;
+
+    // Render SKU (title) - bold/prominent, wrapped
+    for (const line of titleLines) {
+      if (currentY + skuLineHeight > y + height) break;
       this.addText({
         x: textX,
-        y: topY,
-        text: displaySku,
+        y: currentY,
+        text: line,
         font: String(skuFont),
         xMul: 1,
         yMul: 1
       });
+      currentY += skuLineHeight + lineSpacing;
     }
 
-    // Render Batch (subtitle) in MIDDLE
-    if (hasSubtitle) {
-      const batchMaxChars = this.getMaxCharsForWidth(textWidth, smallFont);
-      const displayBatch = this.truncateText(subtitle, batchMaxChars);
+    // Add gap before subtitle
+    if (titleLines.length > 0 && subtitleLines.length > 0) {
+      currentY += sectionGap - lineSpacing;
+    }
+
+    // Render Batch (subtitle) - wrapped
+    for (const line of subtitleLines) {
+      if (currentY + smallLineHeight > y + height) break;
       this.addText({
         x: textX,
-        y: middleY,
-        text: displayBatch,
+        y: currentY,
+        text: line,
         font: String(smallFont),
         xMul: 1,
         yMul: 1
       });
+      currentY += smallLineHeight + lineSpacing;
     }
 
-    // Render Qty at BOTTOM
+    // Render Qty at bottom (fixed position)
     if (hasQuantity) {
+      const qtyY = y + height - smallLineHeight;
       const qtyText = `Qty: ${quantity}`;
       this.addText({
         x: textX,
-        y: bottomY,
+        y: qtyY,
         text: qtyText,
         font: String(smallFont),
         xMul: 1,
