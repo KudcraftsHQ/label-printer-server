@@ -11,7 +11,9 @@ const DEFAULT_CONFIG = {
   },
   defaults: {
     pageConfig: 'default',
-    padding: 1.5
+    padding: 1.5,
+    horizontalOffset: 0,
+    verticalOffset: 0
   },
   startup: {
     launchOnBoot: false,
@@ -181,6 +183,42 @@ function saveDefaultPadding(padding) {
 }
 
 /**
+ * Get horizontal offset (in mm) - for printer calibration
+ */
+function getHorizontalOffset() {
+  const cfg = getConfig();
+  return cfg.defaults?.horizontalOffset ?? 0;
+}
+
+/**
+ * Save horizontal offset (in mm)
+ */
+function saveHorizontalOffset(horizontalOffset) {
+  const cfg = getConfig();
+  saveConfig({
+    defaults: { ...cfg.defaults, horizontalOffset }
+  });
+}
+
+/**
+ * Get vertical offset (in mm) - for printer calibration
+ */
+function getVerticalOffset() {
+  const cfg = getConfig();
+  return cfg.defaults?.verticalOffset ?? 0;
+}
+
+/**
+ * Save vertical offset (in mm)
+ */
+function saveVerticalOffset(verticalOffset) {
+  const cfg = getConfig();
+  saveConfig({
+    defaults: { ...cfg.defaults, verticalOffset }
+  });
+}
+
+/**
  * Reset configuration to defaults
  */
 function resetConfig() {
@@ -204,6 +242,10 @@ module.exports = {
   saveDefaultPageConfig,
   getDefaultPadding,
   saveDefaultPadding,
+  getHorizontalOffset,
+  saveHorizontalOffset,
+  getVerticalOffset,
+  saveVerticalOffset,
   resetConfig,
   getConfigPath
 };

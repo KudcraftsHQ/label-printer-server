@@ -35,15 +35,21 @@ class TSPLGenerator {
    * @param {string|object} options - Page config ID string, or options object
    * @param {string} options.pageConfigId - Page configuration ID (default: 'default')
    * @param {number} options.padding - Internal padding in mm (default: 1.5)
+   * @param {number} options.horizontalOffset - Horizontal offset in mm for printer calibration (default: 0)
+   * @param {number} options.verticalOffset - Vertical offset in mm for printer calibration (default: 0)
    */
   constructor(options = 'default') {
     // Support both string (pageConfigId) and object (options) for backwards compatibility
     if (typeof options === 'string') {
       this.pageConfig = getPageConfig(options);
       this.padding = LAYOUT_CONFIG.PADDING;
+      this.horizontalOffset = 0;
+      this.verticalOffset = 0;
     } else {
       this.pageConfig = getPageConfig(options.pageConfigId || 'default');
       this.padding = options.padding !== undefined ? options.padding : LAYOUT_CONFIG.PADDING;
+      this.horizontalOffset = options.horizontalOffset !== undefined ? options.horizontalOffset : 0;
+      this.verticalOffset = options.verticalOffset !== undefined ? options.verticalOffset : 0;
     }
     this.commands = [];
     this.fullRowMode = false; // Track if using full row width (multi-column)
@@ -133,9 +139,9 @@ class TSPLGenerator {
       throw new Error('QR code data is required');
     }
 
-    // Convert mm to dots (assuming 203 DPI: 8 dots per mm)
-    const xDots = Math.round(x * 8);
-    const yDots = Math.round(y * 8);
+    // Convert mm to dots (assuming 203 DPI: 8 dots per mm), applying calibration offsets
+    const xDots = Math.round((x + this.horizontalOffset) * 8);
+    const yDots = Math.round((y + this.verticalOffset) * 8);
 
     // QRCODE syntax: x,y,ECC level,cell width,mode,rotation,"data"
     // Mode: A = Auto
@@ -174,9 +180,9 @@ class TSPLGenerator {
       throw new Error('Text is required');
     }
 
-    // Convert mm to dots (assuming 203 DPI: 8 dots per mm)
-    const xDots = Math.round(x * 8);
-    const yDots = Math.round(y * 8);
+    // Convert mm to dots (assuming 203 DPI: 8 dots per mm), applying calibration offsets
+    const xDots = Math.round((x + this.horizontalOffset) * 8);
+    const yDots = Math.round((y + this.verticalOffset) * 8);
 
     // TEXT syntax: x,y,"font",rotation,x-mul,y-mul,"text"
     const cmd = `TEXT ${xDots},${yDots},"${font}",${rotation},${xMul},${yMul},"${text}"`;
@@ -214,9 +220,9 @@ class TSPLGenerator {
       throw new Error('Barcode data is required');
     }
 
-    // Convert mm to dots
-    const xDots = Math.round(x * 8);
-    const yDots = Math.round(y * 8);
+    // Convert mm to dots, applying calibration offsets
+    const xDots = Math.round((x + this.horizontalOffset) * 8);
+    const yDots = Math.round((y + this.verticalOffset) * 8);
     const heightDots = Math.round(height * 8);
     const readable = showText ? 1 : 0;
 
@@ -579,11 +585,11 @@ class TSPLGenerator {
       thickness = 2
     } = options;
 
-    // Convert mm to dots
-    const xDots = Math.round(x * 8);
-    const yDots = Math.round(y * 8);
-    const xEndDots = Math.round((x + width) * 8);
-    const yEndDots = Math.round((y + height) * 8);
+    // Convert mm to dots, applying calibration offsets
+    const xDots = Math.round((x + this.horizontalOffset) * 8);
+    const yDots = Math.round((y + this.verticalOffset) * 8);
+    const xEndDots = Math.round((x + width + this.horizontalOffset) * 8);
+    const yEndDots = Math.round((y + height + this.verticalOffset) * 8);
 
     // BOX syntax: x_start,y_start,x_end,y_end,line_thickness
     const cmd = `BOX ${xDots},${yDots},${xEndDots},${yEndDots},${thickness}`;

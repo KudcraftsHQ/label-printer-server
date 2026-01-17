@@ -109,6 +109,18 @@
               </div>
             </div>
 
+            <!-- Calibration Offsets Row -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-zinc-700 mb-1.5">H Offset (mm) <span class="text-zinc-400">+right/-left</span></label>
+                <input type="number" id="test-hoffset" value="0" min="-10" max="10" step="0.5" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-700 mb-1.5">V Offset (mm) <span class="text-zinc-400">+down/-up</span></label>
+                <input type="number" id="test-voffset" value="0" min="-10" max="10" step="0.5" class="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+              </div>
+            </div>
+
             <!-- Title -->
             <div>
               <label class="block text-xs font-medium text-zinc-700 mb-1.5">Title</label>
@@ -250,6 +262,32 @@
     let connectedPrinter = null;
     let availablePrinters = [];
     let isWindowsServer = false;
+
+    // Load saved settings from localStorage
+    function loadSavedSettings() {
+      const padding = localStorage.getItem('labelPrinter_padding');
+      const hOffset = localStorage.getItem('labelPrinter_horizontalOffset');
+      const vOffset = localStorage.getItem('labelPrinter_verticalOffset');
+
+      if (padding !== null) document.getElementById('test-padding').value = padding;
+      if (hOffset !== null) document.getElementById('test-hoffset').value = hOffset;
+      if (vOffset !== null) document.getElementById('test-voffset').value = vOffset;
+    }
+
+    // Save settings to localStorage when changed
+    function saveSettings() {
+      localStorage.setItem('labelPrinter_padding', document.getElementById('test-padding').value);
+      localStorage.setItem('labelPrinter_horizontalOffset', document.getElementById('test-hoffset').value);
+      localStorage.setItem('labelPrinter_verticalOffset', document.getElementById('test-voffset').value);
+    }
+
+    // Add change listeners to save settings
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedSettings();
+      document.getElementById('test-padding').addEventListener('change', saveSettings);
+      document.getElementById('test-hoffset').addEventListener('change', saveSettings);
+      document.getElementById('test-voffset').addEventListener('change', saveSettings);
+    });
 
     function toHex(num) {
       return '0x' + num.toString(16).toUpperCase().padStart(4, '0');
@@ -493,6 +531,8 @@
       const pageConfig = document.getElementById('test-config').value;
       const layout = document.getElementById('test-layout').value;
       const padding = parseFloat(document.getElementById('test-padding').value) || 1.5;
+      const horizontalOffset = parseFloat(document.getElementById('test-hoffset').value) || 0;
+      const verticalOffset = parseFloat(document.getElementById('test-voffset').value) || 0;
       const title = document.getElementById('test-title').value;
       const subtitle = document.getElementById('test-subtitle').value;
       const barcodeData = document.getElementById('test-qrdata').value;
@@ -516,6 +556,8 @@
           body: JSON.stringify({
             pageConfig,
             padding,
+            horizontalOffset,
+            verticalOffset,
             label: {
               title,
               subtitle: subtitle || undefined,

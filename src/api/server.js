@@ -227,6 +227,8 @@ app.get('/configs', (req, res) => {
  * Body: {
  *   pageConfig: string (optional, default: 'default'),
  *   padding: number (optional, default: 1.5mm),
+ *   horizontalOffset: number (optional, default: 0mm),
+ *   verticalOffset: number (optional, default: 0mm),
  *   label: {
  *     qrData: string (required),
  *     title: string (required),
@@ -237,7 +239,7 @@ app.get('/configs', (req, res) => {
  */
 app.post('/print', (req, res) => {
   try {
-    const { pageConfig, padding, label, quantity } = req.body;
+    const { pageConfig, padding, horizontalOffset, verticalOffset, label, quantity } = req.body;
 
     // Validate required fields - title is required, barcode/qr is optional
     if (!label || !label.title) {
@@ -251,6 +253,8 @@ app.post('/print', (req, res) => {
     const job = printQueue.addJob({
       pageConfig: pageConfig || 'default',
       padding,
+      horizontalOffset,
+      verticalOffset,
       label,
       quantity: quantity || 1
     });
@@ -315,6 +319,8 @@ app.post('/print/custom', (req, res) => {
  *   labels: Array<{title: string, subtitle?: string, qrData?: string}> (required)
  *   pageConfig: string (optional, defaults to 'default')
  *   padding: number (optional, default: 1.5mm)
+ *   horizontalOffset: number (optional, default: 0mm)
+ *   verticalOffset: number (optional, default: 0mm)
  * }
  *
  * This endpoint fills rows left-to-right with unique labels:
@@ -323,7 +329,7 @@ app.post('/print/custom', (req, res) => {
  */
 app.post('/print/batch', (req, res) => {
   try {
-    const { labels, pageConfig = 'default', padding } = req.body;
+    const { labels, pageConfig = 'default', padding, horizontalOffset, verticalOffset } = req.body;
 
     // Validation
     if (!labels || !Array.isArray(labels) || labels.length === 0) {
@@ -344,7 +350,7 @@ app.post('/print/batch', (req, res) => {
     }
 
     const printQueue = getPrintQueue();
-    const job = printQueue.addBatchJob({ labels, pageConfig, padding });
+    const job = printQueue.addBatchJob({ labels, pageConfig, padding, horizontalOffset, verticalOffset });
 
     res.json({
       success: true,

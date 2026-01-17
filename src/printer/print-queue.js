@@ -31,6 +31,8 @@ class PrintQueue {
    * @param {object} jobData.label - Label data
    * @param {number} jobData.quantity - Number of copies
    * @param {number} jobData.padding - Internal padding in mm (optional, default: 1.5)
+   * @param {number} jobData.horizontalOffset - Horizontal offset in mm for calibration (optional)
+   * @param {number} jobData.verticalOffset - Vertical offset in mm for calibration (optional)
    * @returns {object} Created job
    */
   addJob(jobData) {
@@ -41,6 +43,8 @@ class PrintQueue {
       label: jobData.label,
       quantity: jobData.quantity || 1,
       padding: jobData.padding,
+      horizontalOffset: jobData.horizontalOffset,
+      verticalOffset: jobData.verticalOffset,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       error: null,
@@ -93,6 +97,8 @@ class PrintQueue {
    * @param {string} jobData.pageConfig - Page configuration ID
    * @param {Array} jobData.labels - Array of label objects {title, subtitle, qrData}
    * @param {number} jobData.padding - Internal padding in mm (optional, default: 1.5)
+   * @param {number} jobData.horizontalOffset - Horizontal offset in mm for calibration (optional)
+   * @param {number} jobData.verticalOffset - Vertical offset in mm for calibration (optional)
    * @returns {object} Created job
    */
   addBatchJob(jobData) {
@@ -103,6 +109,8 @@ class PrintQueue {
       labels: jobData.labels,  // Array of label objects
       isBatch: true,
       padding: jobData.padding,
+      horizontalOffset: jobData.horizontalOffset,
+      verticalOffset: jobData.verticalOffset,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       error: null,
@@ -246,7 +254,9 @@ class PrintQueue {
       if (!job.tspl) {
         const generator = new TSPLGenerator({
           pageConfigId: job.pageConfig,
-          padding: job.padding
+          padding: job.padding,
+          horizontalOffset: job.horizontalOffset,
+          verticalOffset: job.verticalOffset
         });
 
         if (job.isBatch) {
