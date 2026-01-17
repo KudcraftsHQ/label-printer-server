@@ -5,7 +5,7 @@ const { logger } = require('../utils/logger');
  * Layout constants
  */
 const LAYOUT_CONFIG = {
-  PADDING: 2,           // Internal padding in mm
+  PADDING: 1.5,         // Internal padding in mm
   MIN_FONT_SIZE: 1,     // Minimum font (1 = 8x12 dots)
   MAX_FONT_SIZE: 4,     // Maximum font (4 = 24x32 dots)
   DPI: 8,               // Dots per mm (203 DPI ≈ 8 dots/mm)
