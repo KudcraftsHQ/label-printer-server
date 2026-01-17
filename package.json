@@ -1,6 +1,6 @@
 {
   "name": "label-printer-server",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Electron-based label printer application with TSPL support for thermal printers",
   "main": "src/main.js",
   "scripts": {
