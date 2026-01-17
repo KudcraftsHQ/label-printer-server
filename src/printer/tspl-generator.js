@@ -5,7 +5,7 @@ const { logger } = require('../utils/logger');
  * Layout constants
  */
 const LAYOUT_CONFIG = {
-  PADDING: 2,           // Internal padding in mm
+  PADDING: 1,           // Internal padding in mm (reduced for more text space)
   MIN_FONT_SIZE: 1,     // Minimum font (1 = 8x12 dots)
   MAX_FONT_SIZE: 4,     // Maximum font (4 = 24x32 dots)
   DPI: 8,               // Dots per mm (203 DPI ≈ 8 dots/mm)
@@ -16,12 +16,13 @@ const LAYOUT_CONFIG = {
     3: { width: 16, height: 24, name: 'medium' },
     4: { width: 24, height: 32, name: 'large' }
   },
-  // QR layout character limits (for 33x15mm sticker with 17mm text width)
-  // Consistent layout: title 2 lines, subtitle 2 lines, qty 1 line (if present)
+  // QR layout uses dynamic font sizing for title:
+  // - Short SKUs: Font 2 (larger, more readable)
+  // - Long SKUs: Font 1 (smaller, fits ~38 chars in 2 lines with 1mm padding)
   QR_LAYOUT_LIMITS: {
-    TITLE_MAX_CHARS: 22,              // Font 2, 11 chars/line × 2 lines
-    SUBTITLE_MAX_CHARS: 34,           // Font 1, 17 chars/line × 2 lines
-    QUANTITY_MAX_CHARS: 17            // Font 1, 17 chars/line × 1 line
+    TITLE_MAX_CHARS: 38,              // Font 1, ~19 chars/line × 2 lines (dynamic)
+    SUBTITLE_MAX_CHARS: 38,           // Font 1, ~19 chars/line × 2 lines
+    QUANTITY_MAX_CHARS: 19            // Font 1, ~19 chars/line × 1 line
   }
 };
 
@@ -603,8 +604,10 @@ class TSPLGenerator {
       return;
     }
 
-    // Font settings - SKU gets larger/bold font
-    const skuFont = 2; // Larger font for SKU (bold effect)
+    // Dynamic font for SKU - use larger font if it fits, smaller for long SKUs
+    const titleMaxLines = 2;
+    const font2MaxChars = this.getMaxCharsForWidth(textWidth, 2) * titleMaxLines;
+    const skuFont = (title && title.length <= font2MaxChars) ? 2 : 1;
     const skuLineHeight = this.getFontHeightMm(skuFont);
     const smallFont = 1;
     const smallLineHeight = this.getFontHeightMm(smallFont);
@@ -612,9 +615,6 @@ class TSPLGenerator {
 
     const hasSubtitle = !!subtitle;
     const hasQuantity = quantity !== undefined && quantity !== null;
-
-    // Consistent max lines for all layouts
-    const titleMaxLines = 2;
     const subtitleMaxLines = 2;
 
     // Wrap text to fit within available width
